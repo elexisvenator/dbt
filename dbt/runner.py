@@ -100,7 +100,7 @@ class RunManager(object):
         num_threads = self.config.threads
         target_name = self.config.target_name
 
-        text = "Concurrency: {} threads (target='{}')"
+        text = "Concurrency: {} threads (target='{}') **FORCING SINGLE THREAD**"
         concurrency_line = text.format(num_threads, target_name)
         dbt.ui.printer.print_timestamped_line(concurrency_line)
         dbt.ui.printer.print_timestamped_line("")
@@ -108,7 +108,7 @@ class RunManager(object):
         schemas = list(Runner.get_model_schemas(manifest))
         node_runners = self.get_runners(Runner, adapter, node_dependency_list)
 
-        pool = ThreadPool(num_threads)
+        #pool = ThreadPool(num_threads)
         node_results = []
         for node_list in node_dependency_list:
             runners = self.get_relevant_runners(node_runners, node_list)
@@ -121,7 +121,8 @@ class RunManager(object):
                 })
 
             try:
-                for result in pool.imap_unordered(self.call_runner, args_list):
+                # pool.imap_unordered(self.call_runner, args_list)
+                for result in map(self.call_runner, args_list):
                     if not Runner.is_ephemeral_model(result.node):
                         node_results.append(result)
 
@@ -136,8 +137,8 @@ class RunManager(object):
                                 runner.do_skip()
 
             except KeyboardInterrupt:
-                pool.close()
-                pool.terminate()
+                # pool.close()
+                # pool.terminate()
 
                 adapter = get_adapter(self.config)
 
@@ -156,11 +157,11 @@ class RunManager(object):
                 dbt.ui.printer.print_run_end_messages(node_results,
                                                       early_exit=True)
 
-                pool.join()
+                #pool.join()
                 raise
 
-        pool.close()
-        pool.join()
+        #pool.close()
+        #pool.join()
 
         return node_results
 
