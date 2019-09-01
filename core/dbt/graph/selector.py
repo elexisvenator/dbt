@@ -12,7 +12,7 @@ SELECTOR_CHILDREN = '+'
 SELECTOR_GLOB = '*'
 SELECTOR_CHILDREN_AND_ANCESTORS = '@'
 SELECTOR_DELIMITER = ':'
-
+SELECTOR_FORCE_FULL_REFRESH = '!'
 
 class SelectionCriteria:
     def __init__(self, node_spec):
@@ -21,7 +21,17 @@ class SelectionCriteria:
         self.select_parents = False
         self.select_childrens_parents = False
         self.selector_type = SELECTOR_FILTERS.FQN
+        self.selector_force_full_refresh = False
 
+        if node_spec.startswith(SELECTOR_CHILDREN_AND_ANCESTORS):
+            self.select_childrens_parents = True
+            node_spec = node_spec[1:]
+
+        if node_spec.startswith(SELECTOR_FORCE_FULL_REFRESH):
+            self.selector_force_full_refresh = True
+            node_spec = node_spec[1:]
+
+        # Here twice to make the order of ! and @ interchangable
         if node_spec.startswith(SELECTOR_CHILDREN_AND_ANCESTORS):
             self.select_childrens_parents = True
             node_spec = node_spec[1:]
@@ -319,6 +329,12 @@ class NodeSelector(MultiSelector):
             if self.manifest.nodes[n].resource_type == NodeType.Test
         }
         collected.update(tests)
+
+        if spec.selector_force_full_refresh:
+            for node in collected:
+                config_dict = node.get('config', {})
+                config_dict.update({ 'force_model_full_refresh': True })
+                node.config = config_dict
 
         return collected
 

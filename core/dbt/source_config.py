@@ -16,8 +16,8 @@ class SourceConfig:
         'unique_key',
         'database',
         'severity',
-
-        'incremental_strategy'
+        'incremental_strategy',
+        'force_model_full_refresh'
     }
 
     ConfigKeys = AppendListFields | ExtendDictFields | ClobberFields
